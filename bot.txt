@@ -1,0 +1,276 @@
+ function doPost(e) {
+  var API_TOKEN='xxxxxxx' //get in Bot Father
+  var update = JSON.parse(e.postData.contents);
+ 
+  function query_button(posttext,mode,amount,mid,chatId){
+    var ikb={
+            'keyboard': ['Test1','Test2'],
+            resize_keyboard:true, one_time_keyboard:true
+    }
+ 
+    var ikb=['Test3','Test4']
+    var payload = {
+          'method': 'sendMessage',
+          'chat_id': String(chatId),
+          'text': posttext,
+          'parse_mode': 'HTML',
+          'reply_markup': JSON.stringify(ikb)
+     }
+    
+    var data = {
+         "method": "post",
+         "payload": payload
+    }
+    
+    UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', data);
+  }
+  
+  function query(type,posttext,mode,amount,mid,chatId){
+	/// use this in "callback_query" mode only
+    var ikb={
+            'inline_keyboard': [],
+             switch_inline_query: false
+         }
+    
+    if (type==1){
+      var payload = {
+       'method': 'sendMessage',
+       'chat_id': String(chatId),
+       'text': posttext,
+       "parse_mode": "Markdown",
+       'reply_markup': JSON.stringify(ikb)   
+    }
+      }
+    
+    if (type==2){
+        var payload = {
+          'method': 'editMessageText',
+          'chat_id': String(chatId),
+          'message_id': String(mid),
+          'text': posttext,
+          "parse_mode": "Markdown",
+          'reply_markup': JSON.stringify(ikb)     
+        }
+      }
+      
+     if (type==3){
+		var payload = {
+                'method': 'sendPhoto',
+                'chat_id': String(chatId),
+                'photo': posttext,
+                'caption': String(mid),
+                "parse_mode": "Markdown",
+                'reply_markup': JSON.stringify(ikb)   
+             }
+		}
+     
+    var data = {
+           "method": "post",
+           'contentType': 'application/json',
+           'payload' : JSON.stringify(payload)
+    }
+   
+    UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', data);
+  }
+  
+  function t_post_html(posttext,mode,caption,chatId){
+    if (mode=="keyboard"){
+       var payload = {
+          'method': 'sendMessage',
+          'chat_id': String(chatId),
+          'text': posttext,
+          'parse_mode': 'HTML',
+          'reply_markup': JSON.stringify(caption) //здесь не описание, а клавиатура !!!
+     }
+    
+    var data = {
+         "method": "post",
+         "payload": payload
+    }
+    
+		UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', data);
+		return 0;
+    }
+    
+    if (mode=="text"){
+    // отправка пользователю текстового сообщения
+    var payload = {
+          'method': 'sendMessage',
+          'chat_id': String(chatId),
+          'text': posttext,
+          'disable_web_page_preview':false,
+          'parse_mode': 'HTML'
+        }
+    }
+    
+    if (mode=="sticker"){
+      // отправка пользователю стикера
+       var payload = {
+          'method': 'sendSticker',
+          'chat_id': String(chatId),
+          'sticker': posttext,
+        } 
+    }
+    
+    if (mode=="audio"){
+     var payload = {
+          'method': 'sendAudio',
+          'chat_id': String(chatId),
+          'audio': posttext,
+          'caption': String(caption),
+        } 
+    }
+    
+    if (mode=="photo"){
+      var payload = {
+          'method': 'sendPhoto',
+          'chat_id': String(chatId),
+          'photo': posttext,
+          'caption': String(caption),
+        } 
+    }
+    
+    if (mode=="video"){
+     var payload = {
+          'method': 'sendVideo',
+          'chat_id': String(chatId),
+          'video': posttext,
+        } 
+    }
+    
+    if (mode=="document"){
+      var payload = {
+          'method': 'sendDocument',
+          'chat_id': String(chatId),
+          'document': String(posttext),
+          'caption':  String(caption),
+      }
+    }
+    
+    if (mode=="location"){
+       var payload = {
+          'method': 'sendLocation',
+          'chat_id': String(chatId),
+          'latitude': String(posttext),
+          'longitude':  String(caption),
+      }
+      
+    }
+     
+    var data = {
+         "method": "post",
+         "payload": payload
+    }
+ 
+    UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', data);
+  }
+  
+  
+  if (update.hasOwnProperty('message')){
+    var msg = update.message;
+    var chatId = msg.chat.id;
+    
+   
+    if (msg.hasOwnProperty('document') || msg.hasOwnProperty('photo') || msg.hasOwnProperty('voice')){
+     
+      if (msg.hasOwnProperty('document')){
+
+          var name=msg.document.file_name
+          var fileid=msg.document.file_id
+          var resp1=UrlFetchApp.fetch('https://api.telegram.org/bot'+API_TOKEN+'/getFile?file_id='+msg.document.file_id);
+          var parsedData2 = JSON.parse(resp1);
+          var path=parsedData2.result.file_path
+         
+        }
+      
+       if (msg.hasOwnProperty('photo')){
+		  ///download photo and save in Google Drive Directory with temp_dir_list id
+          var resp1=UrlFetchApp.fetch('https://api.telegram.org/bot'+API_TOKEN+'/getFile?file_id='+JSON.parse(JSON.stringify(msg.photo[0].file_id)));
+          var parsedData2 = JSON.parse(resp1);
+          var path=parsedData2.result.file_path
+          var url="https://api.telegram.org/file/bot"+API_TOKEN+"/"+path
+          
+		  var res=UrlFetchApp.fetch(query)
+		  var fileBlob = res.getBlob()
+          var destination = DriveApp.getFolderById(temp_dir_list);//id of directory
+          var file=destination.createFile(fileBlob);
+          
+       }
+      
+       return 0;
+    }
+       
+     
+    if (msg.hasOwnProperty('entities') && msg.entities[0].type == 'bot_command') {
+      if (msg.text == '/start'){
+         //do - something
+		 return 0
+      }
+      
+      if (msg.text== '/commands'){
+          //do - something
+		  return 0
+      }
+      
+      
+      if (msg.text== '/upload'){
+		 //do - something
+		 return 0
+      }
+    }
+    
+	if (msg.text=="Test"){
+		//do - something
+		return 0
+	}
+ 
+    if (typeof msg.text == "undefined") {
+      t_post_html('Запрос не может быть обраBotан.','text',"",chatId)
+      return 0
+    }
+  }
+  
+    if (update.hasOwnProperty('inline_query')){
+      function answerInlineQuery(iqid, result){
+        var data = {
+        method: "post",
+        payload: {
+          method: "answerInlineQuery",
+          inline_query_id: iqid,
+          results:JSON.stringify(result)
+        }
+     }
+    
+      UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/', data);
+    } 
+    
+   var arr=['p1','p2','p3']
+   var results=[]
+   arr.sort()
+   
+   for (var i=0;i<arr.length;i++){
+     if (arr[i][0].toLowerCase().indexOf(update.inline_query.query)+1){
+        results.push({
+         'type':'article',
+         'title':arr[i],
+         'id':String(results.length+1),
+         'message_text':arr[i][0],
+         //'description':'description',
+    })  
+    } 
+   }
+           
+      answerInlineQuery(update.inline_query.id,results)
+  }
+    
+    if (update.hasOwnProperty('callback_query')){
+      var data=update.callback_query.data;
+      var id=update.callback_query.message.chat.id
+      
+      if (data=="start"){
+         //do something             
+      }
+       
+      UrlFetchApp.fetch('https://api.telegram.org/bot' + API_TOKEN + '/answerCallbackQuery?callback_query_id='+update.callback_query.id);
+   }
+}
